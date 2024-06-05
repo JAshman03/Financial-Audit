@@ -1,0 +1,133 @@
+import pandas as pd
+import pytest
+
+# Data Loader
+def load_transactions(file_path):
+    """
+    Load transactions from a CSV file.
+
+    :param file_path: Path to the CSV file.
+    :return: DataFrame with transactions.
+    """
+    return pd.read_csv(file_path)
+
+def load_accounts(file_path):
+    """
+    Load accounts from a CSV file.
+
+    :param file_path: Path to the CSV file.
+    :return: DataFrame with accounts.
+    """
+    return pd.read_csv(file_path)
+
+# Financial Calculations
+def calculate_balance(transactions):
+    """
+    Calculate balance for each account based on transactions.
+
+    :param transactions: DataFrame with transactions.
+    :return: Series with account balances.
+    """
+    credits = transactions[transactions['type'] == 'credit'].groupby('account_id')['amount'].sum()
+    debits = transactions[transactions['type'] == 'debit'].groupby('account_id')['amount'].sum()
+    balance = credits - debits
+    return balance.fillna(0)
+
+def calculate_net_flow(transactions):
+    """
+    Calculate net flow for each account based on transactions.
+
+    :param transactions: DataFrame with transactions.
+    :return: Series with net flow for each account.
+    """
+    credits = transactions[transactions['type'] == 'credit'].groupby('account_id')['amount'].sum()
+    debits = transactions[transactions['type'] == 'debit'].groupby('account_id')['amount'].sum()
+    net_flow = credits - debits
+    return net_flow.fillna(0)
+
+# Audit Report
+def generate_report(transactions, accounts):
+    """
+    Generate an audit report based on transactions and accounts.
+
+    :param transactions: DataFrame with transactions.
+    :param accounts: DataFrame with accounts.
+    :return: DataFrame with the audit report.
+    """
+    balances = calculate_balance(transactions)
+    net_flow = calculate_net_flow(transactions)
+
+    report = accounts.set_index('account_id')
+    report['balance'] = balances
+    report['net_flow'] = net_flow
+
+    return report.reset_index()
+
+def save_report(report, file_path):
+    """
+    Save the audit report to a CSV file.
+
+    :param report: DataFrame with the audit report.
+    :param file_path: Path to the CSV file.
+    """
+    report.to_csv(file_path, index=False)
+
+# Main Function
+def main():
+    # Load data
+    transactions = load_transactions('data/transactions.csv')
+    accounts = load_accounts('data/accounts.csv')
+
+    # Generate audit report
+    report = generate_report(transactions, accounts)
+
+    # Save report
+    save_report(report, 'data/audit_report.csv')
+
+    print("Audit report generated successfully.")
+
+if __name__ == "__main__":
+    main()
+
+# Tests
+def test_load_transactions():
+    transactions = load_transactions('data/transactions.csv')
+    assert not transactions.empty
+    assert 'transaction_id' in transactions.columns
+
+def test_load_accounts():
+    accounts = load_accounts('data/accounts.csv')
+    assert not accounts.empty
+    assert 'account_id' in accounts.columns
+
+def test_calculate_balance():
+    transactions = pd.read_csv('data/transactions.csv')
+    balances = calculate_balance(transactions)
+    assert balances.sum() == 2300  # 1000 (credit) + 1500 (credit) - 200 (debit)
+
+def test_calculate_net_flow():
+    transactions = pd.read_csv('data/transactions.csv')
+    net_flow = calculate_net_flow(transactions)
+    assert net_flow.sum() == 2300  # 1000 (credit) + 1500 (credit) - 200 (debit)
+
+def test_generate_report():
+    transactions = load_transactions('data/transactions.csv')
+    accounts = load_accounts('data/accounts.csv')
+    report = generate_report(transactions, accounts)
+    assert not report.empty
+    assert 'balance' in report.columns
+    assert 'net_flow' in report.columns
+
+# Running Tests
+def run_tests():
+    test_load_transactions()
+    test_load_accounts()
+    test_calculate_balance()
+    test_calculate_net_flow()
+    test_generate_report()
+    print("All tests passed.")
+
+# Run tests if this script is executed directly
+if __name__ == "__main__":
+    run_tests()
+
