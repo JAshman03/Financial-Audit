@@ -1,0 +1,4 @@
+transaction_id,account_id,date,amount,type
+1,101,2023-01-01,1000,credit
+2,101,2023-01-02,200,debit
+3,102,2023-01-03,1500,credit
